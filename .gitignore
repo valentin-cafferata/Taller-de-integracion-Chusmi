@@ -1,0 +1,6 @@
+node\_modules/
+\*\*/node\_modules/
+.env
+\*\*/dist/
+\*\*/build/
+.DS\_Store
