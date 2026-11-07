@@ -1,0 +1,59 @@
+services:
+  mariadb:
+    image: mariadb:latest
+    container_name: espocrm-mariadb
+    environment:
+      MARIADB_ROOT_PASSWORD: rootpassword
+      MARIADB_DATABASE: espocrm
+      MARIADB_USER: espocrm
+      MARIADB_PASSWORD: espocrmpassword
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    restart: always
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      start_period: 10s
+      timeout: 5s
+      retries: 5
+
+  espocrm:
+    image: espocrm/espocrm:latest
+    container_name: espocrm
+    environment:
+      ESPOCRM_DATABASE_PLATFORM: Mysql
+      ESPOCRM_DATABASE_HOST: mariadb
+      ESPOCRM_DATABASE_USER: espocrm
+      ESPOCRM_DATABASE_PASSWORD: espocrmpassword
+      ESPOCRM_DATABASE_NAME: espocrm
+      ESPOCRM_ADMIN_USERNAME: admin
+      ESPOCRM_ADMIN_PASSWORD: adminpassword
+      ESPOCRM_SITE_URL: "http://localhost:8080"
+    volumes:
+      - espocrm_data:/var/www/html/data
+      - espocrm_custom:/var/www/html/custom
+      - espocrm_custom_client:/var/www/html/client/custom
+    restart: always
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+
+  espocrm-daemon:
+    image: espocrm/espocrm:latest
+    container_name: espocrm-daemon
+    volumes:
+      - espocrm_data:/var/www/html/data
+      - espocrm_custom:/var/www/html/custom
+      - espocrm_custom_client:/var/www/html/client/custom
+    restart: always
+    depends_on:
+      - espocrm
+    entrypoint: docker-daemon.sh
+
+volumes:
+  mariadb_data:
+  espocrm_data:
+  espocrm_custom:
+  espocrm_custom_client:
